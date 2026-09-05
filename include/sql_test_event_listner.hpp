@@ -2,11 +2,14 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 
+#include "sqlite3.h"
+
 namespace testing {
 
 class SqlTestEventListener : public TestEventListener {
  public:
-    SqlTestEventListener(std::filesystem::path db_path);
+  explicit SqlTestEventListener(std::filesystem::path db_path);
+  ~SqlTestEventListener() override;
   void OnTestProgramStart(const UnitTest& unit_test) override;
   void OnTestIterationStart(const UnitTest& unit_test,
                             int iteration) override;
@@ -32,6 +35,8 @@ class SqlTestEventListener : public TestEventListener {
   void OnTestIterationEnd(const UnitTest& unit_test,
                           int iteration) override;
   void OnTestProgramEnd(const UnitTest& unit_test) override;
+private:
+ sqlite3* m_db = nullptr;
 };
 
 }  // namespace testing
