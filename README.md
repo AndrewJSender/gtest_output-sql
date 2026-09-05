@@ -4,13 +4,13 @@ Support `--gtest_output` to SQL/SQLite.
 
 ## Example
 
-The example builds a GoogleTest sample, the sources in `src/`, and SQLite as a
+The example builds `example/main.cpp`, the sources in `src/`, and SQLite as a
 static library from the `submodules/sqlite` submodule.
 
 ```sh
-cmake -S example -B build-example
-cmake --build build-example --target sample1
-./build-example/sample1
+cmake -S example -B build -G Xcode
+cmake --build build --config Debug --target example
+./build/Debug/example
 ```
 
 Initialize the submodules before configuring:

@@ -9,6 +9,7 @@ set(GTEST_SOURCE_DIR "${PROJECT_ROOT}/submodules/googletest")
 set(SQLITE_SOURCE_DIR "${PROJECT_ROOT}/submodules/sqlite")
 set(SQLITE_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/sqlite")
 file(MAKE_DIRECTORY "${SQLITE_INSTALL_DIR}/include")
+find_program(SQLITE_MAKE_PROGRAM NAMES make gmake REQUIRED)
 
 add_subdirectory("${GTEST_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/googletest")
 
@@ -19,8 +20,8 @@ ExternalProject_Add(sqlite_build
     --disable-shared
     --enable-static
     --prefix=<INSTALL_DIR>
-  BUILD_COMMAND $(MAKE)
-  INSTALL_COMMAND $(MAKE) install
+  BUILD_COMMAND "${SQLITE_MAKE_PROGRAM}"
+  INSTALL_COMMAND "${SQLITE_MAKE_PROGRAM}" install
   BUILD_BYPRODUCTS "${SQLITE_INSTALL_DIR}/lib/libsqlite3.a"
   INSTALL_DIR "${SQLITE_INSTALL_DIR}"
 )
@@ -32,13 +33,11 @@ set_target_properties(sqlite PROPERTIES
 )
 add_dependencies(sqlite sqlite_build)
 
-add_executable(sample1
-  "${GTEST_SOURCE_DIR}/googletest/samples/sample1.cc"
-  "${GTEST_SOURCE_DIR}/googletest/samples/sample1_unittest.cc"
+add_executable(example
+  "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
   "${PROJECT_ROOT}/src/sql_test_event_listner.cpp"
 )
-target_include_directories(sample1 PRIVATE
-  "${GTEST_SOURCE_DIR}/googletest/samples"
+target_include_directories(example PRIVATE
   "${PROJECT_ROOT}/include"
 )
-target_link_libraries(sample1 PRIVATE sqlite gtest_main)
+target_link_libraries(example PRIVATE sqlite gtest)

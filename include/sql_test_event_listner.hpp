@@ -1,10 +1,12 @@
 
 #include <gtest/gtest.h>
+#include <filesystem>
 
 namespace testing {
 
-class [[nodiscard]] SqlTestEventListener : public TestEventListener {
+class SqlTestEventListener : public TestEventListener {
  public:
+    SqlTestEventListener(std::filesystem::path db_path);
   void OnTestProgramStart(const UnitTest& unit_test) override;
   void OnTestIterationStart(const UnitTest& unit_test,
                             int iteration) override;
