@@ -1,6 +1,9 @@
 
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "sqlite3.h"
 
@@ -37,6 +40,10 @@ class SqlTestEventListener : public TestEventListener {
   void OnTestProgramEnd(const UnitTest& unit_test) override;
 private:
  sqlite3* m_db = nullptr;
+ sqlite3_int64 m_program_id = 0;
+ sqlite3_int64 m_environment_id = 0;
+ std::unordered_map<std::string, sqlite3_int64> m_suite_ids;
+ std::unordered_map<std::string, sqlite3_int64> m_test_ids;
 };
 
 }  // namespace testing

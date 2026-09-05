@@ -40,4 +40,7 @@ add_executable(example
 target_include_directories(example PRIVATE
   "${PROJECT_ROOT}/include"
 )
+target_compile_definitions(example PRIVATE
+  SQL_TEST_EVENT_LISTENER_SQL_DIR="${PROJECT_ROOT}/sql"
+)
 target_link_libraries(example PRIVATE sqlite gtest)
