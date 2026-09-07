@@ -1,0 +1,6 @@
+[submodule "submodules/googletest"]
+	path = submodules/googletest
+	url = https://github.com/google/googletest.git
+[submodule "submodules/sqlite"]
+	path = submodules/sqlite
+	url = https://github.com/sqlite/sqlite.git
