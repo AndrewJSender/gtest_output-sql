@@ -64,9 +64,8 @@ vcpkg_installed/
 # debug information files
 *.dwo
 
-# test output & cache
-Testing/
-.cache/
+# test results
+test_results.db
 
 # macOS
 .DS_Store
