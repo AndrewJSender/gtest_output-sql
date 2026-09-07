@@ -160,46 +160,53 @@ SqlTestEventListener::~SqlTestEventListener() {
 }
 
 void SqlTestEventListener::OnTestProgramStart(const UnitTest& unit_test) {
+  m_program_start_timestamp = unit_test.start_timestamp();
   m_program_id = InsertRow(
       m_db,
       ReadStatement("program.sql", "program_insert").c_str(),
-      {"program", "running"}, {unit_test.start_timestamp()});
+      {"program", "running"}, {m_program_start_timestamp});
 }
 
 void SqlTestEventListener::OnTestIterationStart(const UnitTest&, int) {}
 void SqlTestEventListener::OnEnvironmentsSetUpStart(const UnitTest&) {
+  m_environment_start_timestamp = NowMillis();
   m_environment_id = InsertRow(
       m_db,
       ReadStatement("environment.sql", "environment_insert").c_str(),
-      {"environment", "running"}, {NowMillis(), m_program_id});
+      {"environment", "running"},
+      {m_environment_start_timestamp, m_program_id});
 }
 void SqlTestEventListener::OnEnvironmentsSetUpEnd(const UnitTest&) {
   Execute(m_db, ReadStatement("environment.sql", "environment_setup_update").c_str(),
           {"setup_complete"}, {m_environment_id});
 }
 void SqlTestEventListener::OnTestSuiteStart(const TestSuite& test_suite) {
+  const auto start_timestamp = NowMillis();
+  m_suite_start_timestamps[test_suite.name()] = start_timestamp;
   m_suite_ids[test_suite.name()] = InsertRow(
       m_db,
       ReadStatement("suite.sql", "suite_insert").c_str(),
       {test_suite.name(), "running"},
-      {test_suite.start_timestamp(), m_program_id});
+      {start_timestamp, m_program_id});
 }
 #ifndef GTEST_REMOVE_LEGACY_TEST_CASEAPI_
 void SqlTestEventListener::OnTestCaseStart(const TestCase&) {}
 #endif
 void SqlTestEventListener::OnTestStart(const TestInfo& test_info) {
   const auto suite_id = m_suite_ids.at(test_info.test_suite_name());
+  const auto start_timestamp = NowMillis();
+  m_test_start_timestamps[TestKey(test_info)] = start_timestamp;
   m_test_ids[TestKey(test_info)] = InsertRow(
       m_db, ReadStatement("test.sql", "test_insert").c_str(),
       {test_info.name(), "running"},
-      {NowMillis(), suite_id});
+      {start_timestamp, suite_id});
 }
 void SqlTestEventListener::OnTestDisabled(const TestInfo& test_info) {
   const auto suite_id = m_suite_ids.at(test_info.test_suite_name());
   m_test_ids[TestKey(test_info)] = InsertRow(
       m_db,
       ReadStatement("test.sql", "test_disabled_insert").c_str(),
-      {test_info.name(), "disabled"}, {suite_id, 1});
+      {test_info.name(), "disabled"}, {suite_id});
 }
 void SqlTestEventListener::OnTestPartResult(const TestPartResult&) {}
 void SqlTestEventListener::OnTestEnd(const TestInfo& test_info) {
@@ -207,14 +214,12 @@ void SqlTestEventListener::OnTestEnd(const TestInfo& test_info) {
   const char* result_name = result->Skipped() ? "skipped"
                             : result->Failed() ? "failed"
                                                : "passed";
-  const int pass_count = result->Passed() ? 1 : 0;
-  const int failed_count = result->Failed() ? 1 : 0;
-  const int skip_count = result->Skipped() ? 1 : 0;
   Execute(m_db,
       ReadStatement("test.sql", "test_update").c_str(),
           {result_name},
-          {result->start_timestamp() + result->elapsed_time(), pass_count,
-           failed_count, skip_count, 0, m_test_ids.at(TestKey(test_info))});
+          {m_test_start_timestamps.at(TestKey(test_info)) +
+               result->elapsed_time(),
+           m_test_ids.at(TestKey(test_info))});
 }
 void SqlTestEventListener::OnTestSuiteEnd(const TestSuite& test_suite) {
   const int incomplete_count =
@@ -223,7 +228,8 @@ void SqlTestEventListener::OnTestSuiteEnd(const TestSuite& test_suite) {
   Execute(m_db,
       ReadStatement("suite.sql", "suite_update").c_str(),
           {test_suite.Failed() ? "failed" : "passed"},
-          {test_suite.start_timestamp() + test_suite.elapsed_time(),
+          {m_suite_start_timestamps.at(test_suite.name()) +
+               test_suite.elapsed_time(),
            test_suite.successful_test_count(), test_suite.failed_test_count(),
            test_suite.skipped_test_count(), incomplete_count,
            m_suite_ids.at(test_suite.name())});
@@ -240,7 +246,9 @@ void SqlTestEventListener::OnEnvironmentsTearDownEnd(const UnitTest& unit_test) 
   Execute(m_db,
       ReadStatement("environment.sql", "environment_update").c_str(),
           {unit_test.Failed() ? "failed" : "passed"},
-          {NowMillis(), unit_test.successful_test_count(),
+      {m_environment_start_timestamp +
+           (NowMillis() - m_environment_start_timestamp),
+       unit_test.successful_test_count(),
            unit_test.failed_test_count(), unit_test.skipped_test_count(),
            unit_test.total_test_count() - unit_test.successful_test_count() -
                unit_test.failed_test_count() - unit_test.skipped_test_count(),
@@ -251,7 +259,7 @@ void SqlTestEventListener::OnTestProgramEnd(const UnitTest& unit_test) {
   Execute(m_db,
       ReadStatement("program.sql", "program_update").c_str(),
           {unit_test.Failed() ? "failed" : "passed"},
-          {unit_test.start_timestamp() + unit_test.elapsed_time(),
+          {m_program_start_timestamp + unit_test.elapsed_time(),
            unit_test.successful_test_count(), unit_test.failed_test_count(),
            unit_test.skipped_test_count(),
            unit_test.total_test_count() - unit_test.successful_test_count() -
