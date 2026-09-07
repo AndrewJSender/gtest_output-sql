@@ -1,3 +1,6 @@
+-- Copyright (c) 2026 Andrew J. Sender.
+-- All rights reserved.
+
 CREATE TABLE IF NOT EXISTS program (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,

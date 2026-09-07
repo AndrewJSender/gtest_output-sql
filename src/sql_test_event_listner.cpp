@@ -1,6 +1,9 @@
 
 
 
+// Copyright (c) 2026 Andrew J. Sender.
+// All rights reserved.
+
 #include "sql_test_event_listner.hpp"
 
 #include <iostream>

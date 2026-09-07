@@ -1,4 +1,7 @@
 
+// Copyright (c) 2026 Andrew J. Sender.
+// All rights reserved.
+
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <string>

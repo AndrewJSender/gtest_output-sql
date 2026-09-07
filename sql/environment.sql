@@ -1,3 +1,6 @@
+-- Copyright (c) 2026 Andrew J. Sender.
+-- All rights reserved.
+
 CREATE TABLE IF NOT EXISTS environment (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   program_id INTEGER NOT NULL,

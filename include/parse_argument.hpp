@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Andrew J. Sender.
+// All rights reserved.
+
 #ifndef PARSE_ARGUMENT_HPP_
 #define PARSE_ARGUMENT_HPP_
 
