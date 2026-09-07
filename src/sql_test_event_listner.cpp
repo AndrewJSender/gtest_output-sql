@@ -40,9 +40,9 @@ void CheckSqlite(int result, sqlite3* db, const char* operation) {
 
 void ExecuteScript(sqlite3* db, const char* file_name) {
   std::string sql = ReadSql(file_name);
-  const std::size_t statement_marker = sql.find("-- ");
-  if (statement_marker != std::string::npos) {
-    sql.resize(statement_marker);
+  const std::size_t schema_end = sql.find("\n-- ", sql.find(';'));
+  if (schema_end != std::string::npos) {
+    sql.resize(schema_end);
   }
   char* error_message = nullptr;
   const int result =
