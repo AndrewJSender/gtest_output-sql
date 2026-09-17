@@ -4,7 +4,6 @@
 CREATE TABLE IF NOT EXISTS environment (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   program_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
   start_timestamp INTEGER,
   end_timestamp INTEGER,
   result TEXT,
@@ -16,8 +15,8 @@ CREATE TABLE IF NOT EXISTS environment (
 );
 
 -- environment_insert
-INSERT INTO environment (name, result, start_timestamp, program_id)
-VALUES (?, ?, ?, ?);
+INSERT INTO environment (result, start_timestamp, program_id)
+VALUES (?, ?, ?);
 
 -- environment_setup_update
 UPDATE environment SET result = ? WHERE id = ?;

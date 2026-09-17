@@ -1,22 +1,27 @@
-
 // Copyright (c) 2026 Andrew J. Sender.
 // All rights reserved.
 
+#ifndef SQL_TEST_EVENT_LISTNER_HPP_
+#define SQL_TEST_EVENT_LISTNER_HPP_
+
 #include <gtest/gtest.h>
+#include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
-
-#include <libpq-fe.h>
-#include "sqlite3.h"
 
 namespace testing {
 
+class SqlBackend;
+
+// GoogleTest event listener that streams test results to a SQL database as
+// testing progresses. Supports SQLite and PostgreSQL via SqlBackend
+// implementations selected by the constructor overload used.
 class SqlTestEventListener : public TestEventListener {
  public:
-  SqlTestEventListener(std::filesystem::path db_path);
-  SqlTestEventListener(std::string url);
+  explicit SqlTestEventListener(std::filesystem::path db_path);
+  explicit SqlTestEventListener(std::string url);
   ~SqlTestEventListener() override;
   void OnTestProgramStart(const UnitTest& unit_test) override;
   void OnTestIterationStart(const UnitTest& unit_test,
@@ -44,23 +49,18 @@ class SqlTestEventListener : public TestEventListener {
                           int iteration) override;
   void OnTestProgramEnd(const UnitTest& unit_test) override;
 
-  enum class Type {
-    SQLite,
-    PostgreSQL,
-  };
-
-private:
-  sqlite3* m_sqlite_db = nullptr;
-  PGconn* m_postgresql_db = nullptr;
-  sqlite3_int64 m_program_id = 0;
-  sqlite3_int64 m_program_start_timestamp = 0;
-  sqlite3_int64 m_environment_id = 0;
-  sqlite3_int64 m_environment_start_timestamp = 0;
-  std::unordered_map<std::string, sqlite3_int64> m_suite_ids;
-  std::unordered_map<std::string, sqlite3_int64> m_suite_start_timestamps;
-  std::unordered_map<std::string, sqlite3_int64> m_test_ids;
-  std::unordered_map<std::string, sqlite3_int64> m_test_start_timestamps;
-  Type m_type;
+ private:
+  std::unique_ptr<SqlBackend> m_backend;
+  std::int64_t m_program_id = 0;
+  std::int64_t m_program_start_timestamp = 0;
+  std::int64_t m_environment_id = 0;
+  std::int64_t m_environment_start_timestamp = 0;
+  std::unordered_map<std::string, std::int64_t> m_suite_ids;
+  std::unordered_map<std::string, std::int64_t> m_suite_start_timestamps;
+  std::unordered_map<std::string, std::int64_t> m_test_ids;
+  std::unordered_map<std::string, std::int64_t> m_test_start_timestamps;
 };
 
 }  // namespace testing
+
+#endif  // SQL_TEST_EVENT_LISTNER_HPP_

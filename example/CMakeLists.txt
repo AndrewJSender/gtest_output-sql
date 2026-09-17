@@ -37,6 +37,9 @@ add_dependencies(sqlite sqlite_build)
 add_executable(example
   "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
   "${PROJECT_ROOT}/src/parse_argument.cpp"
+  "${PROJECT_ROOT}/src/sql_statement_reader.cpp"
+  "${PROJECT_ROOT}/src/sqlite_backend.cpp"
+  "${PROJECT_ROOT}/src/postgresql_backend.cpp"
   "${PROJECT_ROOT}/src/sql_test_event_listner.cpp"
 )
 target_include_directories(example PRIVATE

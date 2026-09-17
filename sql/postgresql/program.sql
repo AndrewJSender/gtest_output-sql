@@ -3,7 +3,6 @@
 
 CREATE TABLE IF NOT EXISTS program (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name TEXT NOT NULL,
   start_timestamp BIGINT,
   end_timestamp BIGINT,
   result TEXT,
@@ -14,7 +13,7 @@ CREATE TABLE IF NOT EXISTS program (
 );
 
 -- program_insert
-INSERT INTO program (name, result, start_timestamp) VALUES ($1, $2, $3)
+INSERT INTO program (result, start_timestamp) VALUES ($1, $2)
 RETURNING id;
 
 -- program_update

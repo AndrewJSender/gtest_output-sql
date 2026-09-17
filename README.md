@@ -60,7 +60,6 @@ Top-level information about a test program execution.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER | Primary key (auto-increment) |
-| `name` | TEXT | Name of the test program |
 | `start_timestamp` | INTEGER | Unix timestamp when execution started |
 | `end_timestamp` | INTEGER | Unix timestamp when execution ended |
 | `result` | TEXT | Overall result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
@@ -76,7 +75,6 @@ Test environment/configuration information associated with a program.
 |--------|------|-------------|
 | `id` | INTEGER | Primary key (auto-increment) |
 | `program_id` | INTEGER | Foreign key to `program` table |
-| `name` | TEXT | Environment name |
 | `start_timestamp` | INTEGER | Unix timestamp when environment setup started |
 | `end_timestamp` | INTEGER | Unix timestamp when environment teardown ended |
 | `result` | TEXT | Environment setup result |

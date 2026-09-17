@@ -3,7 +3,6 @@
 
 CREATE TABLE IF NOT EXISTS program (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
   start_timestamp INTEGER,
   end_timestamp INTEGER,
   result TEXT,
@@ -14,7 +13,7 @@ CREATE TABLE IF NOT EXISTS program (
 );
 
 -- program_insert
-INSERT INTO program (name, result, start_timestamp) VALUES (?, ?, ?);
+INSERT INTO program (result, start_timestamp) VALUES (?, ?);
 
 -- program_update
 UPDATE program

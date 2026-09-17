@@ -4,7 +4,6 @@
 CREATE TABLE IF NOT EXISTS environment (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   program_id BIGINT NOT NULL,
-  name TEXT NOT NULL,
   start_timestamp BIGINT,
   end_timestamp BIGINT,
   result TEXT,
@@ -16,8 +15,8 @@ CREATE TABLE IF NOT EXISTS environment (
 );
 
 -- environment_insert
-INSERT INTO environment (name, result, start_timestamp, program_id)
-VALUES ($1, $2, $3, $4)
+INSERT INTO environment (result, start_timestamp, program_id)
+VALUES ($1, $2, $3)
 RETURNING id;
 
 -- environment_setup_update
