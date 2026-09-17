@@ -10,6 +10,7 @@ set(SQLITE_SOURCE_DIR "${PROJECT_ROOT}/submodules/sqlite")
 set(SQLITE_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/sqlite")
 file(MAKE_DIRECTORY "${SQLITE_INSTALL_DIR}/include")
 find_program(SQLITE_MAKE_PROGRAM NAMES make gmake REQUIRED)
+find_package(PostgreSQL REQUIRED)
 
 add_subdirectory("${GTEST_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/googletest")
 
@@ -44,4 +45,4 @@ target_include_directories(example PRIVATE
 target_compile_definitions(example PRIVATE
   SQL_TEST_EVENT_LISTENER_SQL_DIR="${PROJECT_ROOT}/sql"
 )
-target_link_libraries(example PRIVATE sqlite gtest)
+target_link_libraries(example PRIVATE sqlite PostgreSQL::PostgreSQL gtest)

@@ -8,13 +8,15 @@
 #include <unordered_map>
 #include <vector>
 
+#include <libpq-fe.h>
 #include "sqlite3.h"
 
 namespace testing {
 
 class SqlTestEventListener : public TestEventListener {
  public:
-  explicit SqlTestEventListener(std::filesystem::path db_path);
+  SqlTestEventListener(std::filesystem::path db_path);
+  SqlTestEventListener(std::string url);
   ~SqlTestEventListener() override;
   void OnTestProgramStart(const UnitTest& unit_test) override;
   void OnTestIterationStart(const UnitTest& unit_test,
@@ -41,16 +43,24 @@ class SqlTestEventListener : public TestEventListener {
   void OnTestIterationEnd(const UnitTest& unit_test,
                           int iteration) override;
   void OnTestProgramEnd(const UnitTest& unit_test) override;
+
+  enum class Type {
+    SQLite,
+    PostgreSQL,
+  };
+
 private:
- sqlite3* m_db = nullptr;
- sqlite3_int64 m_program_id = 0;
- sqlite3_int64 m_program_start_timestamp = 0;
- sqlite3_int64 m_environment_id = 0;
- sqlite3_int64 m_environment_start_timestamp = 0;
- std::unordered_map<std::string, sqlite3_int64> m_suite_ids;
- std::unordered_map<std::string, sqlite3_int64> m_suite_start_timestamps;
- std::unordered_map<std::string, sqlite3_int64> m_test_ids;
- std::unordered_map<std::string, sqlite3_int64> m_test_start_timestamps;
+  sqlite3* m_sqlite_db = nullptr;
+  PGconn* m_postgresql_db = nullptr;
+  sqlite3_int64 m_program_id = 0;
+  sqlite3_int64 m_program_start_timestamp = 0;
+  sqlite3_int64 m_environment_id = 0;
+  sqlite3_int64 m_environment_start_timestamp = 0;
+  std::unordered_map<std::string, sqlite3_int64> m_suite_ids;
+  std::unordered_map<std::string, sqlite3_int64> m_suite_start_timestamps;
+  std::unordered_map<std::string, sqlite3_int64> m_test_ids;
+  std::unordered_map<std::string, sqlite3_int64> m_test_start_timestamps;
+  Type m_type;
 };
 
 }  // namespace testing

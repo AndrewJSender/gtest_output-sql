@@ -29,14 +29,26 @@ Initialize the submodules before configuring:
 git submodule update --init --recursive
 ```
 
-The example builds `example/main.cpp`, the sources in `src/`, and SQLite as a
-static library from the `submodules/sqlite` submodule.
+The example builds `example/main.cpp`, the sources in `src/`, SQLite as a
+static library from the `submodules/sqlite` submodule, and links PostgreSQL's
+installed `libpq` client library.
 
 ```sh
 cmake -S example -B build -G Xcode
 cmake --build build --config Debug --target example
 ./build/Debug/example --gtest_output=sqlite:test_results.db
 ```
+
+For PostgreSQL output, provide a libpq connection URI:
+
+```sh
+./build/Debug/example --gtest_output=postgresql://user:password@host:5432/database
+```
+
+The listener also accepts an Amazon RDS IAM authentication token prefixed with
+`postgresql://`. It extracts the host, port, and `DBUser`, supplies the token
+as the password, and requires TLS. Do not commit connection URIs or
+short-lived IAM tokens to source control.
 
 ## Database Schema
 

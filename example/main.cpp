@@ -11,14 +11,18 @@ TEST(SqlTestEventListener, TestProgramStart) {
 }
 
 int main(int argc, char* argv[]) {
-    auto db_path = ParseGtestSqlOutputArgument(&argc, argv);
+    auto sql_output = ParseGtestSqlOutputArgument(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
-    if (db_path.has_value()) {
+    if (sql_output.has_value()) {
         testing::TestEventListeners& listeners =
             testing::UnitTest::GetInstance()->listeners();
-        auto* sql_listener =
-            new testing::SqlTestEventListener(*db_path);
-        listeners.Append(sql_listener);
+          auto* sql_listener = sql_output->type == SqlOutputType::SQLite
+                                   ? new testing::SqlTestEventListener(
+                                         std::filesystem::path(
+                                             sql_output->connection))
+                                   : new testing::SqlTestEventListener(
+                                         sql_output->connection);
+          listeners.Append(sql_listener);
     }
     return RUN_ALL_TESTS();
 }
