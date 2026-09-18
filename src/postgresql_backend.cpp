@@ -126,8 +126,9 @@ PostgreSqlBackend::PostgreSqlBackend(const std::string& url)
     throw std::runtime_error("Unable to connect to PostgreSQL: " + error);
   }
 
-  for (const char* file_name : {"program.sql", "iteration.sql",
-                                "environment.sql", "suite.sql", "test.sql"}) {
+  for (const char* file_name :
+       {"program.sql", "iteration.sql", "environment.sql", "suite.sql",
+        "test.sql", "test_result_part.sql"}) {
     ExecuteScript(file_name);
   }
   MigrateTimestampColumns();

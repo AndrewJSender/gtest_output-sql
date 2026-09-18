@@ -22,6 +22,20 @@ std::string TestKey(const TestInfo& test_info) {
   return std::string(test_info.test_suite_name()) + '\0' + test_info.name();
 }
 
+const char* TestPartResultTypeName(TestPartResult::Type type) {
+  switch (type) {
+    case TestPartResult::kSuccess:
+      return "success";
+    case TestPartResult::kNonFatalFailure:
+      return "nonfatal_failure";
+    case TestPartResult::kFatalFailure:
+      return "fatal_failure";
+    case TestPartResult::kSkip:
+      return "skip";
+  }
+  return "unknown";
+}
+
 }  // namespace
 
 SqlTestEventListener::SqlTestEventListener(std::filesystem::path db_path)
@@ -75,9 +89,10 @@ void SqlTestEventListener::OnTestStart(const TestInfo& test_info) {
   const auto suite_id = m_suite_ids.at(test_info.test_suite_name());
   const auto start_timestamp = NowMillis();
   m_test_start_timestamps[TestKey(test_info)] = start_timestamp;
-  m_test_ids[TestKey(test_info)] = m_backend->InsertRow(
+  m_current_test_id = m_backend->InsertRow(
       "test.sql", "test_insert", {test_info.name(), "running"},
       {start_timestamp, suite_id});
+  m_test_ids[TestKey(test_info)] = m_current_test_id;
 }
 
 void SqlTestEventListener::OnTestDisabled(const TestInfo& test_info) {
@@ -87,7 +102,20 @@ void SqlTestEventListener::OnTestDisabled(const TestInfo& test_info) {
       {suite_id});
 }
 
-void SqlTestEventListener::OnTestPartResult(const TestPartResult&) {}
+void SqlTestEventListener::OnTestPartResult(
+    const TestPartResult& test_part_result) {
+  if (m_current_test_id == 0) {
+    // Test part results reported outside of a running test (e.g. during
+    // environment setup) have no test row to attach to.
+    return;
+  }
+  const char* file_name = test_part_result.file_name();
+  m_backend->InsertRow(
+      "test_result_part.sql", "test_result_part_insert",
+      {TestPartResultTypeName(test_part_result.type()),
+       file_name != nullptr ? file_name : "", test_part_result.message()},
+      {m_current_test_id, test_part_result.line_number(), NowMillis()});
+}
 
 void SqlTestEventListener::OnTestEnd(const TestInfo& test_info) {
   const TestResult* result = test_info.result();
@@ -98,6 +126,7 @@ void SqlTestEventListener::OnTestEnd(const TestInfo& test_info) {
       "test.sql", "test_update", {result_name},
       {m_test_start_timestamps.at(TestKey(test_info)) + result->elapsed_time(),
        m_test_ids.at(TestKey(test_info))});
+  m_current_test_id = 0;
 }
 
 void SqlTestEventListener::OnTestSuiteEnd(const TestSuite& test_suite) {

@@ -3,12 +3,26 @@
 #include <gtest/gtest.h>
 #include "parse_argument.hpp"
 
-TEST(SqlTestEventListener, TestProgramStart) {
-    // This test is just to trigger the OnTestProgramStart event.
-    // The actual output will be printed by the SqlTestEventListener.
-    sleep(3);
-    ASSERT_TRUE(true);
+TEST(SqlTestEventListener, Test1) {
+    GTEST_SUCCEED() << "Success 1";
+    sleep(1);
+    EXPECT_TRUE(true);
+    
 }
+
+TEST(SqlTestEventListener, Test2) {
+    GTEST_SUCCEED() << "Success 2";
+    sleep(1);
+    EXPECT_TRUE(true);
+}
+
+TEST(SqlTestEventListener, DISABLED_disabled) {
+    GTEST_SUCCEED() << "Should not happen";
+    sleep(1);
+    EXPECT_TRUE(true);
+}
+
+
 
 int main(int argc, char* argv[]) {
     auto sql_output = ParseGtestSqlOutputArgument(&argc, argv);

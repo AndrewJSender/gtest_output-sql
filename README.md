@@ -52,7 +52,7 @@ short-lived IAM tokens to source control.
 
 ## Database Schema
 
-The output database contains five main tables that capture test execution results:
+The output database contains six main tables that capture test execution results:
 
 ### `program` table
 Top-level information about a test program execution.
@@ -111,6 +111,20 @@ Individual test case results.
 | `start_timestamp` | INTEGER | Unix timestamp when test started |
 | `end_timestamp` | INTEGER | Unix timestamp when test ended |
 | `result` | TEXT | Test result: `"PASSED"`, `"FAILED"`, `"SKIPPED"`, or `"NOTRUN"` |
+
+### `test_result_part` table
+Individual assertion/expectation results reported within a test (e.g. each
+`EXPECT_*`, `ASSERT_*`, `SUCCEED()`, or `FAIL()`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key (auto-increment) |
+| `test_id` | INTEGER | Foreign key to `test` table |
+| `type` | TEXT | Part result type: `"success"`, `"nonfatal_failure"`, `"fatal_failure"`, or `"skip"` |
+| `file_name` | TEXT | Source file where the assertion occurred |
+| `line_number` | INTEGER | Source line where the assertion occurred |
+| `message` | TEXT | Full assertion message |
+| `timestamp` | INTEGER | Unix timestamp when the part result was reported |
 
 ## Usage Examples
 

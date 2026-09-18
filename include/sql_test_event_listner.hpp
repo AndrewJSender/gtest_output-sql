@@ -61,6 +61,7 @@ class SqlTestEventListener : public TestEventListener {
   std::unordered_map<std::string, std::int64_t> m_suite_start_timestamps;
   std::unordered_map<std::string, std::int64_t> m_test_ids;
   std::unordered_map<std::string, std::int64_t> m_test_start_timestamps;
+  std::int64_t m_current_test_id = 0;
 };
 
 }  // namespace testing
