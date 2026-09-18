@@ -3,22 +3,42 @@
 #include <gtest/gtest.h>
 #include "parse_argument.hpp"
 
-TEST(SqlTestEventListener, TestProgramStart) {
-    // This test is just to trigger the OnTestProgramStart event.
-    // The actual output will be printed by the SqlTestEventListener.
-    sleep(3);
-    ASSERT_TRUE(true);
+TEST(SqlTestEventListener, Test1) {
+    GTEST_SUCCEED() << "Success 1";
+    sleep(1);
+    EXPECT_TRUE(true);
+    
 }
 
+TEST(SqlTestEventListener, Test2) {
+    GTEST_SUCCEED() << "Success 2";
+    sleep(1);
+    EXPECT_TRUE(true);
+}
+
+TEST(SqlTestEventListener, DISABLED_disabled) {
+    GTEST_SUCCEED() << "Should not happen";
+    sleep(1);
+    EXPECT_TRUE(true);
+}
+
+
+
 int main(int argc, char* argv[]) {
-    auto db_path = ParseGtestSqlOutputArgument(&argc, argv);
+    auto sql_output = ParseGtestSqlOutputArgument(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
-    if (db_path.has_value()) {
+    if (sql_output.has_value()) {
         testing::TestEventListeners& listeners =
             testing::UnitTest::GetInstance()->listeners();
-        auto* sql_listener =
-            new testing::SqlTestEventListener(*db_path);
-        listeners.Append(sql_listener);
+          auto* sql_listener = sql_output->type == SqlOutputType::SQLite
+                                   ? new testing::SqlTestEventListener(
+                                         std::filesystem::path(
+                                             sql_output->connection))
+                                   : new testing::SqlTestEventListener(
+                                         testing::SqlTestEventListener::
+                                             PostgreSqlTag{},
+                                         sql_output->connection);
+          listeners.Append(sql_listener);
     }
     return RUN_ALL_TESTS();
 }

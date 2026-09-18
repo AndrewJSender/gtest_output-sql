@@ -6,8 +6,18 @@
 
 #include <filesystem>
 #include <optional>
+#include <string>
 
-std::optional<std::filesystem::path> ParseGtestSqlOutputArgument(int* argc,
-                                                                  char* argv[]);
+enum class SqlOutputType {
+  SQLite,
+  PostgreSQL,
+};
+
+struct SqlOutput {
+  SqlOutputType type;
+  std::string connection;
+};
+
+std::optional<SqlOutput> ParseGtestSqlOutputArgument(int* argc, char* argv[]);
 
 #endif  // PARSE_ARGUMENT_HPP_

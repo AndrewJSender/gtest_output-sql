@@ -2,25 +2,20 @@
 -- All rights reserved.
 
 CREATE TABLE IF NOT EXISTS suite (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  program_id INTEGER NOT NULL,
+  id {{PK}},
+  program_id {{INT}} NOT NULL,
   name TEXT NOT NULL,
-  start_timestamp INTEGER,
-  end_timestamp INTEGER,
+  start_timestamp {{INT}},
+  end_timestamp {{INT}},
   result TEXT,
-  pass_count INTEGER NOT NULL DEFAULT 0,
-  failed_count INTEGER NOT NULL DEFAULT 0,
-  skip_count INTEGER NOT NULL DEFAULT 0,
-  incomplete_count INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY(program_id) REFERENCES program(id)
 );
 
 -- suite_insert
 INSERT INTO suite (name, result, start_timestamp, program_id)
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?){{RETURNING}};
 
 -- suite_update
 UPDATE suite
-SET result = ?, end_timestamp = ?, pass_count = ?, failed_count = ?,
-    skip_count = ?, incomplete_count = ?
+SET result = ?, end_timestamp = ?
 WHERE id = ?;

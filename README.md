@@ -29,8 +29,9 @@ Initialize the submodules before configuring:
 git submodule update --init --recursive
 ```
 
-The example builds `example/main.cpp`, the sources in `src/`, and SQLite as a
-static library from the `submodules/sqlite` submodule.
+The example builds `example/main.cpp`, the sources in `src/`, SQLite as a
+static library from the `submodules/sqlite` submodule, and links PostgreSQL's
+installed `libpq` client library.
 
 ```sh
 cmake -S example -B build -G Xcode
@@ -38,9 +39,20 @@ cmake --build build --config Debug --target example
 ./build/Debug/example --gtest_output=sqlite:test_results.db
 ```
 
+For PostgreSQL output, provide a libpq connection URI:
+
+```sh
+./build/Debug/example --gtest_output=postgresql://user:password@host:5432/database
+```
+
+The listener also accepts an Amazon RDS IAM authentication token prefixed with
+`postgresql://`. It extracts the host, port, and `DBUser`, supplies the token
+as the password, and requires TLS. Do not commit connection URIs or
+short-lived IAM tokens to source control.
+
 ## Database Schema
 
-The output database contains four main tables that capture test execution results:
+The output database contains six main tables that capture test execution results:
 
 ### `program` table
 Top-level information about a test program execution.
@@ -48,14 +60,22 @@ Top-level information about a test program execution.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER | Primary key (auto-increment) |
-| `name` | TEXT | Name of the test program |
 | `start_timestamp` | INTEGER | Unix timestamp when execution started |
 | `end_timestamp` | INTEGER | Unix timestamp when execution ended |
 | `result` | TEXT | Overall result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
-| `pass_count` | INTEGER | Total passed tests |
-| `failed_count` | INTEGER | Total failed tests |
-| `skip_count` | INTEGER | Total skipped tests |
-| `incomplete_count` | INTEGER | Total incomplete tests |
+
+### `iteration` table
+A single repetition of the full test program (relevant when running with
+`--gtest_repeat`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key (auto-increment) |
+| `program_id` | INTEGER | Foreign key to `program` table |
+| `iteration_index` | INTEGER | Zero-based repetition number |
+| `start_timestamp` | INTEGER | Unix timestamp when the iteration started |
+| `end_timestamp` | INTEGER | Unix timestamp when the iteration ended |
+| `result` | TEXT | Iteration result: `"PASSED"` or `"FAILED"` |
 
 ### `environment` table
 Test environment/configuration information associated with a program.
@@ -64,14 +84,9 @@ Test environment/configuration information associated with a program.
 |--------|------|-------------|
 | `id` | INTEGER | Primary key (auto-increment) |
 | `program_id` | INTEGER | Foreign key to `program` table |
-| `name` | TEXT | Environment name |
 | `start_timestamp` | INTEGER | Unix timestamp when environment setup started |
 | `end_timestamp` | INTEGER | Unix timestamp when environment teardown ended |
 | `result` | TEXT | Environment setup result |
-| `pass_count` | INTEGER | Passed tests in this environment |
-| `failed_count` | INTEGER | Failed tests in this environment |
-| `skip_count` | INTEGER | Skipped tests in this environment |
-| `incomplete_count` | INTEGER | Incomplete tests in this environment |
 
 ### `suite` table
 Test suite information (a collection of tests grouped logically).
@@ -84,10 +99,6 @@ Test suite information (a collection of tests grouped logically).
 | `start_timestamp` | INTEGER | Unix timestamp when suite started |
 | `end_timestamp` | INTEGER | Unix timestamp when suite ended |
 | `result` | TEXT | Suite result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
-| `pass_count` | INTEGER | Passed tests in this suite |
-| `failed_count` | INTEGER | Failed tests in this suite |
-| `skip_count` | INTEGER | Skipped tests in this suite |
-| `incomplete_count` | INTEGER | Incomplete tests in this suite |
 
 ### `test` table
 Individual test case results.
@@ -100,6 +111,20 @@ Individual test case results.
 | `start_timestamp` | INTEGER | Unix timestamp when test started |
 | `end_timestamp` | INTEGER | Unix timestamp when test ended |
 | `result` | TEXT | Test result: `"PASSED"`, `"FAILED"`, `"SKIPPED"`, or `"NOTRUN"` |
+
+### `test_result_part` table
+Individual assertion/expectation results reported within a test (e.g. each
+`EXPECT_*`, `ASSERT_*`, `SUCCEED()`, or `FAIL()`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key (auto-increment) |
+| `test_id` | INTEGER | Foreign key to `test` table |
+| `type` | TEXT | Part result type: `"success"`, `"nonfatal_failure"`, `"fatal_failure"`, or `"skip"` |
+| `file_name` | TEXT | Source file where the assertion occurred |
+| `line_number` | INTEGER | Source line where the assertion occurred |
+| `message` | TEXT | Full assertion message |
+| `timestamp` | INTEGER | Unix timestamp when the part result was reported |
 
 ## Usage Examples
 
@@ -135,13 +160,17 @@ ORDER BY failed DESC, suite.name;
 ```sql
 -- This query requires unique identifying information per run
 -- Consider adding a "run_id" column to the program table if you need this
-SELECT 
-    p.name as program,
+SELECT
+    p.id AS program_id,
     p.result,
-    p.pass_count,
-    p.failed_count,
-    datetime(p.start_timestamp, 'unixepoch') as start_time
+    COUNT(*) AS total_tests,
+    SUM(CASE WHEN test.result = 'PASSED' THEN 1 ELSE 0 END) AS passed,
+    SUM(CASE WHEN test.result = 'FAILED' THEN 1 ELSE 0 END) AS failed,
+    datetime(p.start_timestamp / 1000, 'unixepoch') AS start_time
 FROM program p
+JOIN suite ON suite.program_id = p.id
+JOIN test ON test.suite_id = suite.id
+GROUP BY p.id, p.result, p.start_timestamp
 ORDER BY p.start_timestamp DESC
 LIMIT 10;
 ```
