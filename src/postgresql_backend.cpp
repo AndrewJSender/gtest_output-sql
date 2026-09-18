@@ -126,8 +126,8 @@ PostgreSqlBackend::PostgreSqlBackend(const std::string& url)
     throw std::runtime_error("Unable to connect to PostgreSQL: " + error);
   }
 
-  for (const char* file_name :
-       {"program.sql", "environment.sql", "suite.sql", "test.sql"}) {
+  for (const char* file_name : {"program.sql", "iteration.sql",
+                                "environment.sql", "suite.sql", "test.sql"}) {
     ExecuteScript(file_name);
   }
   MigrateTimestampColumns();
@@ -175,7 +175,7 @@ DECLARE
   target_table TEXT;
   target_column TEXT;
 BEGIN
-  FOREACH target_table IN ARRAY ARRAY['program', 'environment', 'suite', 'test']
+  FOREACH target_table IN ARRAY ARRAY['program', 'iteration', 'environment', 'suite', 'test']
   LOOP
     FOREACH target_column IN ARRAY ARRAY['start_timestamp', 'end_timestamp']
     LOOP

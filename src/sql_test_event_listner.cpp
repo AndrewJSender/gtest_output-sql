@@ -38,7 +38,14 @@ void SqlTestEventListener::OnTestProgramStart(const UnitTest& unit_test) {
                                       {"running"}, {m_program_start_timestamp});
 }
 
-void SqlTestEventListener::OnTestIterationStart(const UnitTest&, int) {}
+void SqlTestEventListener::OnTestIterationStart(const UnitTest&,
+                                                int iteration) {
+  const auto start_timestamp = NowMillis();
+  m_iteration_start_timestamps[iteration] = start_timestamp;
+  m_iteration_ids[iteration] = m_backend->InsertRow(
+      "iteration.sql", "iteration_insert", {"running"},
+      {iteration, start_timestamp, m_program_id});
+}
 
 void SqlTestEventListener::OnEnvironmentsSetUpStart(const UnitTest&) {
   m_environment_start_timestamp = NowMillis();
@@ -117,7 +124,13 @@ void SqlTestEventListener::OnEnvironmentsTearDownEnd(const UnitTest& unit_test) 
       {NowMillis(), m_environment_id});
 }
 
-void SqlTestEventListener::OnTestIterationEnd(const UnitTest&, int) {}
+void SqlTestEventListener::OnTestIterationEnd(const UnitTest& unit_test,
+                                              int iteration) {
+  m_backend->Execute(
+      "iteration.sql", "iteration_update",
+      {unit_test.Failed() ? "failed" : "passed"},
+      {NowMillis(), m_iteration_ids.at(iteration)});
+}
 
 void SqlTestEventListener::OnTestProgramEnd(const UnitTest& unit_test) {
   m_backend->Execute(

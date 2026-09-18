@@ -39,8 +39,8 @@ SqliteBackend::SqliteBackend(std::filesystem::path db_path) {
 
   ExecuteStatement("PRAGMA foreign_keys = ON;", {}, {});
   ExecuteStatement("PRAGMA user_version = 1;", {}, {});
-  for (const char* file_name :
-       {"program.sql", "environment.sql", "suite.sql", "test.sql"}) {
+  for (const char* file_name : {"program.sql", "iteration.sql",
+                                "environment.sql", "suite.sql", "test.sql"}) {
     ExecuteScript(file_name);
   }
 }

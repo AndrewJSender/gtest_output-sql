@@ -53,6 +53,8 @@ class SqlTestEventListener : public TestEventListener {
   std::unique_ptr<SqlBackend> m_backend;
   std::int64_t m_program_id = 0;
   std::int64_t m_program_start_timestamp = 0;
+  std::unordered_map<int, std::int64_t> m_iteration_ids;
+  std::unordered_map<int, std::int64_t> m_iteration_start_timestamps;
   std::int64_t m_environment_id = 0;
   std::int64_t m_environment_start_timestamp = 0;
   std::unordered_map<std::string, std::int64_t> m_suite_ids;

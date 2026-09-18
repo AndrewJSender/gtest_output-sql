@@ -52,7 +52,7 @@ short-lived IAM tokens to source control.
 
 ## Database Schema
 
-The output database contains four main tables that capture test execution results:
+The output database contains five main tables that capture test execution results:
 
 ### `program` table
 Top-level information about a test program execution.
@@ -63,6 +63,19 @@ Top-level information about a test program execution.
 | `start_timestamp` | INTEGER | Unix timestamp when execution started |
 | `end_timestamp` | INTEGER | Unix timestamp when execution ended |
 | `result` | TEXT | Overall result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
+
+### `iteration` table
+A single repetition of the full test program (relevant when running with
+`--gtest_repeat`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key (auto-increment) |
+| `program_id` | INTEGER | Foreign key to `program` table |
+| `iteration_index` | INTEGER | Zero-based repetition number |
+| `start_timestamp` | INTEGER | Unix timestamp when the iteration started |
+| `end_timestamp` | INTEGER | Unix timestamp when the iteration ended |
+| `result` | TEXT | Iteration result: `"PASSED"` or `"FAILED"` |
 
 ### `environment` table
 Test environment/configuration information associated with a program.
