@@ -14,8 +14,8 @@
 
 namespace testing {
 
-// SQLite implementation of SqlBackend. Owns the SQLite connection and the
-// schema/statement files under the "sqlite" SQL schema directory.
+// SQLite implementation of SqlBackend. Owns the SQLite connection and reads
+// the shared "sql/" schema/statement files using the "sqlite" dialect.
 class SqliteBackend : public SqlBackend {
  public:
   explicit SqliteBackend(std::filesystem::path db_path);

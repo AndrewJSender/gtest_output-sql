@@ -2,21 +2,20 @@
 -- All rights reserved.
 
 CREATE TABLE IF NOT EXISTS suite (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  program_id BIGINT NOT NULL,
+  id {{PK}},
+  program_id {{INT}} NOT NULL,
   name TEXT NOT NULL,
-  start_timestamp BIGINT,
-  end_timestamp BIGINT,
+  start_timestamp {{INT}},
+  end_timestamp {{INT}},
   result TEXT,
   FOREIGN KEY(program_id) REFERENCES program(id)
 );
 
 -- suite_insert
 INSERT INTO suite (name, result, start_timestamp, program_id)
-VALUES ($1, $2, $3, $4)
-RETURNING id;
+VALUES (?, ?, ?, ?){{RETURNING}};
 
 -- suite_update
 UPDATE suite
-SET result = $1, end_timestamp = $2
-WHERE id = $3;
+SET result = ?, end_timestamp = ?
+WHERE id = ?;

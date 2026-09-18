@@ -14,8 +14,9 @@
 
 namespace testing {
 
-// PostgreSQL implementation of SqlBackend. Owns the libpq connection and the
-// schema/statement files under the "postgresql" SQL schema directory.
+// PostgreSQL implementation of SqlBackend. Owns the libpq connection and
+// reads the shared "sql/" schema/statement files using the "postgresql"
+// dialect.
 class PostgreSqlBackend : public SqlBackend {
  public:
   explicit PostgreSqlBackend(const std::string& url);

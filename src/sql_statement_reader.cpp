@@ -6,44 +6,82 @@
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <utility>
 
 namespace testing {
 namespace {
 
-std::filesystem::path SqlPath(const char* dialect, const char* file_name) {
+std::filesystem::path SqlPath(const char* file_name) {
 #ifdef SQL_TEST_EVENT_LISTENER_SQL_DIR
   const std::filesystem::path sql_directory(SQL_TEST_EVENT_LISTENER_SQL_DIR);
 #else
   const std::filesystem::path sql_directory("sql");
 #endif
-  return sql_directory / dialect / file_name;
+  return sql_directory / file_name;
 }
 
-std::string ReadSql(const char* dialect, const char* file_name) {
-  const std::filesystem::path sql_path = SqlPath(dialect, file_name);
+void ReplaceAll(std::string& text, const std::string& from,
+                const std::string& to) {
+  std::size_t position = 0;
+  while ((position = text.find(from, position)) != std::string::npos) {
+    text.replace(position, from.size(), to);
+    position += to.size();
+  }
+}
+
+// Rewrites dialect-neutral SQL templates for the target `dialect`
+// ("sqlite" or "postgresql"), substituting the auto-increment primary key
+// definition, the wide-integer column type, and the trailing "RETURNING id"
+// clause on INSERT statements. For "postgresql", positional "?" parameter
+// placeholders are also rewritten to libpq's "$1", "$2", ... style.
+std::string ApplyDialect(std::string sql, const char* dialect) {
+  const bool is_postgresql = std::string(dialect) == "postgresql";
+  ReplaceAll(sql, "{{PK}}",
+            is_postgresql ? "BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
+                          : "INTEGER PRIMARY KEY AUTOINCREMENT");
+  ReplaceAll(sql, "{{INT}}", is_postgresql ? "BIGINT" : "INTEGER");
+  ReplaceAll(sql, "{{RETURNING}}", is_postgresql ? "\nRETURNING id" : "");
+  if (is_postgresql) {
+    std::string rewritten;
+    rewritten.reserve(sql.size());
+    int parameter = 1;
+    for (char c : sql) {
+      if (c == '?') {
+        rewritten += '$' + std::to_string(parameter++);
+      } else {
+        rewritten += c;
+      }
+    }
+    sql = std::move(rewritten);
+  }
+  return sql;
+}
+
+std::string ReadRawSql(const char* file_name) {
+  const std::filesystem::path sql_path = SqlPath(file_name);
   std::ifstream file(sql_path);
   if (!file) {
     throw std::runtime_error("Unable to open SQL file '" + sql_path.string() +
                              "'");
   }
-  return {std::istreambuf_iterator<char>(file),
-          std::istreambuf_iterator<char>()};
+  return std::string{std::istreambuf_iterator<char>(file),
+                     std::istreambuf_iterator<char>()};
 }
 
 }  // namespace
 
 std::string ReadSqlSchema(const char* dialect, const char* file_name) {
-  std::string sql = ReadSql(dialect, file_name);
+  std::string sql = ReadRawSql(file_name);
   const std::size_t schema_end = sql.find("\n-- ", sql.find(';'));
   if (schema_end != std::string::npos) {
     sql.resize(schema_end);
   }
-  return sql;
+  return ApplyDialect(std::move(sql), dialect);
 }
 
 std::string ReadSqlStatement(const char* dialect, const char* file_name,
                              const char* marker) {
-  const std::string sql = ReadSql(dialect, file_name);
+  const std::string sql = ReadRawSql(file_name);
   const std::string marker_text = std::string("-- ") + marker + "\n";
   const std::size_t marker_start = sql.find(marker_text);
   if (marker_start == std::string::npos) {
@@ -56,7 +94,9 @@ std::string ReadSqlStatement(const char* dialect, const char* file_name,
     throw std::runtime_error("SQL statement '" + std::string(marker) +
                              "' in '" + file_name + "' has no terminator");
   }
-  return sql.substr(statement_start, statement_end - statement_start + 1);
+  return ApplyDialect(
+      sql.substr(statement_start, statement_end - statement_start + 1),
+      dialect);
 }
 
 }  // namespace testing
