@@ -41,7 +41,7 @@ const char* TestPartResultTypeName(TestPartResult::Type type) {
 SqlTestEventListener::SqlTestEventListener(std::filesystem::path db_path)
     : m_backend(std::make_unique<SqliteBackend>(std::move(db_path))) {}
 
-SqlTestEventListener::SqlTestEventListener(std::string url)
+SqlTestEventListener::SqlTestEventListener(PostgreSqlTag, std::string url)
     : m_backend(std::make_unique<PostgreSqlBackend>(url)) {}
 
 SqlTestEventListener::~SqlTestEventListener() = default;

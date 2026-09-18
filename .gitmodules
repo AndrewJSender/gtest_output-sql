@@ -6,4 +6,4 @@
 	url = https://github.com/sqlite/sqlite.git
 [submodule "submodules/postgres"]
 	path = submodules/postgres
-	url = git@github.com:postgres/postgres.git
+	url = https://github.com/postgres/postgres.git

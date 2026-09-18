@@ -20,8 +20,10 @@ class SqlBackend;
 // implementations selected by the constructor overload used.
 class SqlTestEventListener : public TestEventListener {
  public:
+  struct PostgreSqlTag {};
+
   explicit SqlTestEventListener(std::filesystem::path db_path);
-  explicit SqlTestEventListener(std::string url);
+  SqlTestEventListener(PostgreSqlTag, std::string url);
   ~SqlTestEventListener() override;
   void OnTestProgramStart(const UnitTest& unit_test) override;
   void OnTestIterationStart(const UnitTest& unit_test,

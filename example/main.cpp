@@ -35,6 +35,8 @@ int main(int argc, char* argv[]) {
                                          std::filesystem::path(
                                              sql_output->connection))
                                    : new testing::SqlTestEventListener(
+                                         testing::SqlTestEventListener::
+                                             PostgreSqlTag{},
                                          sql_output->connection);
           listeners.Append(sql_listener);
     }
