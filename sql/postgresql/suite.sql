@@ -8,10 +8,6 @@ CREATE TABLE IF NOT EXISTS suite (
   start_timestamp BIGINT,
   end_timestamp BIGINT,
   result TEXT,
-  pass_count INTEGER NOT NULL DEFAULT 0,
-  failed_count INTEGER NOT NULL DEFAULT 0,
-  skip_count INTEGER NOT NULL DEFAULT 0,
-  incomplete_count INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY(program_id) REFERENCES program(id)
 );
 
@@ -22,6 +18,5 @@ RETURNING id;
 
 -- suite_update
 UPDATE suite
-SET result = $1, end_timestamp = $2, pass_count = $3, failed_count = $4,
-    skip_count = $5, incomplete_count = $6
-WHERE id = $7;
+SET result = $1, end_timestamp = $2
+WHERE id = $3;

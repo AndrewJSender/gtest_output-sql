@@ -94,16 +94,10 @@ void SqlTestEventListener::OnTestEnd(const TestInfo& test_info) {
 }
 
 void SqlTestEventListener::OnTestSuiteEnd(const TestSuite& test_suite) {
-  const int incomplete_count = test_suite.total_test_count() -
-                               test_suite.successful_test_count() -
-                               test_suite.failed_test_count() -
-                               test_suite.skipped_test_count();
   m_backend->Execute(
       "suite.sql", "suite_update", {test_suite.Failed() ? "failed" : "passed"},
       {m_suite_start_timestamps.at(test_suite.name()) +
            test_suite.elapsed_time(),
-       test_suite.successful_test_count(), test_suite.failed_test_count(),
-       test_suite.skipped_test_count(), incomplete_count,
        m_suite_ids.at(test_suite.name())});
 }
 
@@ -120,11 +114,7 @@ void SqlTestEventListener::OnEnvironmentsTearDownEnd(const UnitTest& unit_test) 
   m_backend->Execute(
       "environment.sql", "environment_update",
       {unit_test.Failed() ? "failed" : "passed"},
-      {NowMillis(), unit_test.successful_test_count(),
-       unit_test.failed_test_count(), unit_test.skipped_test_count(),
-       unit_test.total_test_count() - unit_test.successful_test_count() -
-           unit_test.failed_test_count() - unit_test.skipped_test_count(),
-       m_environment_id});
+      {NowMillis(), m_environment_id});
 }
 
 void SqlTestEventListener::OnTestIterationEnd(const UnitTest&, int) {}
@@ -133,12 +123,7 @@ void SqlTestEventListener::OnTestProgramEnd(const UnitTest& unit_test) {
   m_backend->Execute(
       "program.sql", "program_update",
       {unit_test.Failed() ? "failed" : "passed"},
-      {m_program_start_timestamp + unit_test.elapsed_time(),
-       unit_test.successful_test_count(), unit_test.failed_test_count(),
-       unit_test.skipped_test_count(),
-       unit_test.total_test_count() - unit_test.successful_test_count() -
-           unit_test.failed_test_count() - unit_test.skipped_test_count(),
-       m_program_id});
+      {m_program_start_timestamp + unit_test.elapsed_time(), m_program_id});
 }
 
 }  // namespace testing

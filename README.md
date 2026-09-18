@@ -63,10 +63,6 @@ Top-level information about a test program execution.
 | `start_timestamp` | INTEGER | Unix timestamp when execution started |
 | `end_timestamp` | INTEGER | Unix timestamp when execution ended |
 | `result` | TEXT | Overall result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
-| `pass_count` | INTEGER | Total passed tests |
-| `failed_count` | INTEGER | Total failed tests |
-| `skip_count` | INTEGER | Total skipped tests |
-| `incomplete_count` | INTEGER | Total incomplete tests |
 
 ### `environment` table
 Test environment/configuration information associated with a program.
@@ -78,10 +74,6 @@ Test environment/configuration information associated with a program.
 | `start_timestamp` | INTEGER | Unix timestamp when environment setup started |
 | `end_timestamp` | INTEGER | Unix timestamp when environment teardown ended |
 | `result` | TEXT | Environment setup result |
-| `pass_count` | INTEGER | Passed tests in this environment |
-| `failed_count` | INTEGER | Failed tests in this environment |
-| `skip_count` | INTEGER | Skipped tests in this environment |
-| `incomplete_count` | INTEGER | Incomplete tests in this environment |
 
 ### `suite` table
 Test suite information (a collection of tests grouped logically).
@@ -94,10 +86,6 @@ Test suite information (a collection of tests grouped logically).
 | `start_timestamp` | INTEGER | Unix timestamp when suite started |
 | `end_timestamp` | INTEGER | Unix timestamp when suite ended |
 | `result` | TEXT | Suite result: `"PASSED"`, `"FAILED"`, or `"SKIPPED"` |
-| `pass_count` | INTEGER | Passed tests in this suite |
-| `failed_count` | INTEGER | Failed tests in this suite |
-| `skip_count` | INTEGER | Skipped tests in this suite |
-| `incomplete_count` | INTEGER | Incomplete tests in this suite |
 
 ### `test` table
 Individual test case results.
@@ -145,13 +133,17 @@ ORDER BY failed DESC, suite.name;
 ```sql
 -- This query requires unique identifying information per run
 -- Consider adding a "run_id" column to the program table if you need this
-SELECT 
-    p.name as program,
+SELECT
+    p.id AS program_id,
     p.result,
-    p.pass_count,
-    p.failed_count,
-    datetime(p.start_timestamp, 'unixepoch') as start_time
+    COUNT(*) AS total_tests,
+    SUM(CASE WHEN test.result = 'PASSED' THEN 1 ELSE 0 END) AS passed,
+    SUM(CASE WHEN test.result = 'FAILED' THEN 1 ELSE 0 END) AS failed,
+    datetime(p.start_timestamp / 1000, 'unixepoch') AS start_time
 FROM program p
+JOIN suite ON suite.program_id = p.id
+JOIN test ON test.suite_id = suite.id
+GROUP BY p.id, p.result, p.start_timestamp
 ORDER BY p.start_timestamp DESC
 LIMIT 10;
 ```
