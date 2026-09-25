@@ -1,7 +1,12 @@
 
-#include "sql_test_event_listner.hpp"
+// Copyright (c) 2026 Andrew J. Sender.
+// All rights reserved.
+
 #include <gtest/gtest.h>
+
+#include "sql_test_event_listner.hpp"
 #include "parse_argument.hpp"
+#include "register_listener.hpp"
 
 TEST(SqlTestEventListener, Test1) {
     GTEST_SUCCEED() << "Success 1";
@@ -22,23 +27,9 @@ TEST(SqlTestEventListener, DISABLED_disabled) {
     EXPECT_TRUE(true);
 }
 
-
-
 int main(int argc, char* argv[]) {
     auto sql_output = ParseGtestSqlOutputArgument(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
-    if (sql_output.has_value()) {
-        testing::TestEventListeners& listeners =
-            testing::UnitTest::GetInstance()->listeners();
-          auto* sql_listener = sql_output->type == SqlOutputType::SQLite
-                                   ? new testing::SqlTestEventListener(
-                                         std::filesystem::path(
-                                             sql_output->connection))
-                                   : new testing::SqlTestEventListener(
-                                         testing::SqlTestEventListener::
-                                             PostgreSqlTag{},
-                                         sql_output->connection);
-          listeners.Append(sql_listener);
-    }
+    RegisterSqlTestEventListenerIfRequested(sql_output);
     return RUN_ALL_TESTS();
 }

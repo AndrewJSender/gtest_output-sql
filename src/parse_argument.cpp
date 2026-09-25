@@ -3,23 +3,30 @@
 
 #include "parse_argument.hpp"
 
+#include "sql_test_event_listner.hpp"
+
+#include <gtest/gtest.h>
 #include <string>
 
-std::optional<SqlOutput> ParseGtestSqlOutputArgument(int* argc, char* argv[]) {
-  constexpr char gtest_output_flag[] = "--gtest_output";
-  constexpr char sqlite_output_prefix[] = "sqlite:";
-  constexpr char postgresql_output_prefix[] = "postgresql://";
+namespace {
 
+constexpr char kGtestOutputFlag[] = "--gtest_output";
+constexpr char kSqliteOutputPrefix[] = "sqlite:";
+constexpr char kPostgresqlOutputPrefix[] = "postgresql://";
+
+}  // namespace
+
+std::optional<SqlOutput> ParseGtestSqlOutputArgument(int* argc, char* argv[]) {
   for (int i = 1; i < *argc; ++i) {
     const std::string argument(argv[i]);
     std::string output_value;
     int arguments_to_remove = 0;
 
-    if (argument.rfind(std::string(gtest_output_flag) + '=', 0) == 0) {
+    if (argument.rfind(std::string(kGtestOutputFlag) + '=', 0) == 0) {
       output_value =
-          argument.substr(std::string(gtest_output_flag).length() + 1);
+          argument.substr(std::string(kGtestOutputFlag).length() + 1);
       arguments_to_remove = 1;
-    } else if (argument == gtest_output_flag && i + 1 < *argc) {
+    } else if (argument == kGtestOutputFlag && i + 1 < *argc) {
       output_value = argv[i + 1];
       arguments_to_remove = 2;
     } else {
@@ -28,10 +35,10 @@ std::optional<SqlOutput> ParseGtestSqlOutputArgument(int* argc, char* argv[]) {
 
     SqlOutputType type;
     std::size_t connection_start = std::string::npos;
-    if (output_value.rfind(sqlite_output_prefix, 0) == 0) {
+    if (output_value.rfind(kSqliteOutputPrefix, 0) == 0) {
       type = SqlOutputType::SQLite;
-      connection_start = sizeof(sqlite_output_prefix) - 1;
-    } else if (output_value.rfind(postgresql_output_prefix, 0) == 0) {
+      connection_start = sizeof(kSqliteOutputPrefix) - 1;
+    } else if (output_value.rfind(kPostgresqlOutputPrefix, 0) == 0) {
       type = SqlOutputType::PostgreSQL;
       connection_start = 0;
     }
@@ -50,3 +57,4 @@ std::optional<SqlOutput> ParseGtestSqlOutputArgument(int* argc, char* argv[]) {
 
   return std::nullopt;
 }
+
