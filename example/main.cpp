@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "sql_test_event_listner.hpp"
-
+#include "parse_argument.hpp"
 #include "register_listener.hpp"
 
 TEST(SqlTestEventListener, Test1) {
@@ -28,7 +28,8 @@ TEST(SqlTestEventListener, DISABLED_disabled) {
 }
 
 int main(int argc, char* argv[]) {
+    auto sql_output = ParseGtestSqlOutputArgument(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
-    RegisterSqlTestEventListenerIfRequested(&argc, argv);
+    RegisterSqlTestEventListenerIfRequested(sql_output);
     return RUN_ALL_TESTS();
 }

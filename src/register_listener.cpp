@@ -8,8 +8,7 @@
 
 #include <gtest/gtest.h>
 
-void RegisterSqlTestEventListenerIfRequested(int* argc, char* argv[]) {
-  const auto sql_output = ParseGtestSqlOutputArgument(argc, argv);
+void RegisterSqlTestEventListenerIfRequested(std::optional<SqlOutput> sql_output) {
   if (!sql_output.has_value()) {
     return;
   }
