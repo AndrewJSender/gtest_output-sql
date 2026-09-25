@@ -4,6 +4,9 @@
 #ifndef REGISTER_LISTENER_HPP_
 #define REGISTER_LISTENER_HPP_
 
-void RegisterSqlTestEventListenerIfRequested(int* argc, char* argv[]);
+#include "parse_argument.hpp"
+#include "sql_test_event_listner.hpp"
+
+void RegisterSqlTestEventListenerIfRequested(std::optional<SqlOutput> sql_output);
 
 #endif  // REGISTER_LISTENER_HPP_
