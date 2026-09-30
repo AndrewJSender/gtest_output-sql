@@ -3,6 +3,7 @@
 
 #include "sqlite_backend.hpp"
 
+#include <memory>
 #include <stdexcept>
 #include <utility>
 
@@ -92,6 +93,55 @@ void SqliteBackend::Execute(const char* file_name, const char* marker,
                             const std::vector<std::int64_t>& integers) {
   ExecuteStatement(ReadSqlStatement(kDialect, file_name, marker), values,
                    integers);
+}
+
+std::vector<std::vector<std::string>> SqliteBackend::Query(
+    const char* file_name, const char* marker,
+    const std::vector<std::string>& values,
+    const std::vector<std::int64_t>& integers) {
+  const std::string sql = ReadSqlStatement(kDialect, file_name, marker);
+  sqlite3_stmt* raw_statement = nullptr;
+  CheckSqlite(sqlite3_prepare_v2(m_db, sql.c_str(), -1, &raw_statement, nullptr),
+              m_db, "Unable to prepare SQLite query");
+  const auto finalize = [](sqlite3_stmt* statement) {
+    if (statement != nullptr) {
+      sqlite3_finalize(statement);
+    }
+  };
+  const std::unique_ptr<sqlite3_stmt, decltype(finalize)> statement(
+      raw_statement, finalize);
+
+  int parameter = 1;
+  for (const auto& value : values) {
+    CheckSqlite(sqlite3_bind_text(statement.get(), parameter++, value.c_str(),
+                                  -1, SQLITE_TRANSIENT),
+                m_db, "Unable to bind SQLite text");
+  }
+  for (std::int64_t integer : integers) {
+    CheckSqlite(sqlite3_bind_int64(statement.get(), parameter++, integer), m_db,
+                "Unable to bind SQLite integer");
+  }
+
+  std::vector<std::vector<std::string>> rows;
+  int result = SQLITE_OK;
+  while ((result = sqlite3_step(statement.get())) == SQLITE_ROW) {
+    std::vector<std::string> row;
+    const int column_count = sqlite3_column_count(statement.get());
+    row.reserve(static_cast<std::size_t>(column_count));
+    for (int column = 0; column < column_count; ++column) {
+      const auto* text = sqlite3_column_text(statement.get(), column);
+      const int length = sqlite3_column_bytes(statement.get(), column);
+      row.emplace_back(text != nullptr
+                           ? std::string(reinterpret_cast<const char*>(text),
+                                         static_cast<std::size_t>(length))
+                           : std::string());
+    }
+    rows.push_back(std::move(row));
+  }
+  if (result != SQLITE_DONE) {
+    CheckSqlite(result, m_db, "Unable to execute SQLite query");
+  }
+  return rows;
 }
 
 std::int64_t SqliteBackend::InsertRow(
