@@ -21,6 +21,12 @@ class SqlBackend {
                        const std::vector<std::string>& values,
                        const std::vector<std::int64_t>& integers) = 0;
 
+  // Executes the marked query in `file_name` and returns its rows as text.
+  virtual std::vector<std::vector<std::string>> Query(
+      const char* file_name, const char* marker,
+      const std::vector<std::string>& values,
+      const std::vector<std::int64_t>& integers) = 0;
+
   // Executes the marked insert statement in `file_name` and returns the
   // primary key of the inserted row.
   virtual std::int64_t InsertRow(

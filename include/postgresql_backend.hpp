@@ -25,6 +25,10 @@ class PostgreSqlBackend : public SqlBackend {
   void Execute(const char* file_name, const char* marker,
               const std::vector<std::string>& values,
               const std::vector<std::int64_t>& integers) override;
+  std::vector<std::vector<std::string>> Query(
+      const char* file_name, const char* marker,
+      const std::vector<std::string>& values,
+      const std::vector<std::int64_t>& integers) override;
   std::int64_t InsertRow(const char* file_name, const char* marker,
                          const std::vector<std::string>& values,
                          const std::vector<std::int64_t>& integers) override;

@@ -219,6 +219,36 @@ void PostgreSqlBackend::Execute(const char* file_name, const char* marker,
   PQclear(result);
 }
 
+std::vector<std::vector<std::string>> PostgreSqlBackend::Query(
+    const char* file_name, const char* marker,
+    const std::vector<std::string>& values,
+    const std::vector<std::int64_t>& integers) {
+  PGresult* result = ExecuteStatement(
+      ReadSqlStatement(kDialect, file_name, marker), values, integers);
+  if (result == nullptr || PQresultStatus(result) != PGRES_TUPLES_OK) {
+    const std::string error = PQerrorMessage(m_db);
+    PQclear(result);
+    throw std::runtime_error("Unable to query PostgreSQL: " + error);
+  }
+
+  std::vector<std::vector<std::string>> rows;
+  const int row_count = PQntuples(result);
+  const int column_count = PQnfields(result);
+  rows.reserve(static_cast<std::size_t>(row_count));
+  for (int row_index = 0; row_index < row_count; ++row_index) {
+    std::vector<std::string> row;
+    row.reserve(static_cast<std::size_t>(column_count));
+    for (int column = 0; column < column_count; ++column) {
+      row.emplace_back(PQgetisnull(result, row_index, column)
+                           ? ""
+                           : PQgetvalue(result, row_index, column));
+    }
+    rows.push_back(std::move(row));
+  }
+  PQclear(result);
+  return rows;
+}
+
 std::int64_t PostgreSqlBackend::InsertRow(
     const char* file_name, const char* marker,
     const std::vector<std::string>& values,
